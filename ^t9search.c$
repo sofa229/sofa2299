@@ -1,0 +1,103 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdlib.h>
+
+#define MAGICKECISLO 48 //offset podla asii tabulky
+#define MAXPOCETZNAKOV 5 //
+
+//2 (abc), 3 (def), 4 (ghi), 5 (jkl), 6 (mno), 7 (pqrs), 8 (tuv), 9 (wxyz), 0 (+)
+char mapovanie[10][MAXPOCETZNAKOV] = {"0+", "1", "2abc", "3def", "4ghi", "5jlk", "6mno", "7pqrs", "8tuv", "9wxyz"};
+
+bool hladajsubstringSPreapovanim (char* string, char* substring){
+    size_t parameter_counter = 0;
+    
+    for (size_t i = 0; i < strlen(string); i++)
+    {   
+        char premapovane[MAXPOCETZNAKOV];                                //sem ulozime cislo premapovanie na cislo a sekvenciu znakov
+        int ciselny_index =  substring[parameter_counter] - MAGICKECISLO;    //cislo ako char prevedieme na int jednoduchim odratanim magickej konstatny podla ascii tabulky
+        strcpy(premapovane, mapovanie[ciselny_index]);
+        
+        for (size_t x = 0; x < strlen(premapovane); x++){
+
+            if(string[i] == premapovane[x]){
+                parameter_counter ++;
+                if (parameter_counter == strlen(substring)){
+                    return true;
+                }
+                break;
+            }
+            else if (x == strlen(premapovane)-1){
+                i -=parameter_counter;
+                parameter_counter = 0;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool zistiCiJeKontakVZozname(char *meno, char *cislo, char* parameter)    //vrati true ak sa nachada v zozname, inak false
+{
+    return hladajsubstringSPreapovanim(meno, parameter) || hladajsubstringSPreapovanim(cislo, parameter); //kontroluje, ci v mene ALEBO cisle sa nasiel hladany substring
+}
+
+
+
+int main(int argc, char **argv)
+{
+    bool nasielSomAsponJedenKontakt = false;
+    char* parameter ="";
+    if (argc == 2)
+    {
+        //printf("cislo je: %s\n", argv[1]);
+        parameter = argv[1];
+    }
+
+    while (1)
+    {
+        char meno[101];
+        char cislo[101];
+        char c;
+
+        if (scanf("%100[^\n]%c", meno, &c) == EOF)  //nacitaj meno do mena a znak za nim do c a skontroluj ci neni koniec suboru
+        {
+            //printf("koniec suboru");
+            break;
+        }
+
+        if (c != '\n')          //ak sa nerovna znak c, ktory je za menom znaku noveho riadku, meno malo dlzku viac ako 100 znakov
+        {
+            fprintf(stderr, "Riadok presiahol 100 znakov\n");//--->error stav
+            return 1;
+        }
+
+        if (scanf("%100[^\n]%c", cislo, &c) == EOF)
+        {
+
+            fprintf(stderr, "Nacital si meno ale subor uz skoncil bez cisla\n"); //--->error stav
+            return 1;
+        }
+
+        if (c != '\n')
+        {
+            fprintf(stderr, "Riadok presiahol 100 znakov\n");//--->error stav
+            return 1;
+        }
+
+        if (argc == 1)
+        {
+            printf("%s,%s\n",meno, cislo);
+        }
+        else if (zistiCiJeKontakVZozname(meno, cislo, parameter) ){
+            printf("%s,%s\n",meno, cislo);
+            nasielSomAsponJedenKontakt = true;
+        }
+
+    }
+    if (!nasielSomAsponJedenKontakt && argc != 1)
+    {
+        printf("Not found\n");
+    }
+    return 0;
+}
